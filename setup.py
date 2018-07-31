@@ -30,7 +30,7 @@ setup(
                       'ujson==1.35',
                       'mock==2.0.0',
                       'numpy==1.15.0',
-                      'pandas>=0.18.0',
+                      'pandas==0.22',
                       'pytest==3.6.4',
                       'requests==2.18.1',
                       'retry==0.9.2',

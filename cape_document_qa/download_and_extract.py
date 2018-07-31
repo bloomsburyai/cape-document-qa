@@ -56,6 +56,30 @@ def download_and_extract(url: str, destination_folder: str, total_mb_size: Optio
     return True
 
 
+@retry(delay=1, backoff=2, tries=4)
+def download_file(url: str, destination_folder: str, total_mb_size: Optional[float] = None) -> bool:
+    try:
+        # another process is currently (or was) working on the same url and destination folder
+        key = url + destination_folder
+        marker_filepath = os.path.join(destination_folder, sha256(key.encode()).hexdigest() + '.marker')
+        Path(destination_folder).mkdir(exist_ok=True)
+        Path(marker_filepath).touch(exist_ok=False)
+    except FileExistsError:
+        return False
+    try:
+        filepath = os.path.join(destination_folder, Path(url).name)
+        download_or_resume(url, filepath, total_mb_size)
+    except Exception:
+        os.remove(marker_filepath)
+        info(f"Could not download {url}, retrying or aborting...")
+        raise
+    except (KeyboardInterrupt, SystemExit):
+        os.remove(marker_filepath)
+        info(f"Aborting download for system exit...")
+        raise
+    return True
+
+
 def download_or_resume(url, file_path, total_mb_size=None):
     block_size = 1000 * 1000
     tmp_file_path = file_path + '.part'

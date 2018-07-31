@@ -8,3 +8,5 @@ MODEL_URL = os.getenv('CAPE_MODEL_URL',
                       'https://github.com/bloomsburyai/cape-document-qa/releases/download/v0.1.1/production_ready_model.tar.bz2')
 MODEL_MB_SIZE = os.getenv('CAPE_MODEL_MB_SIZE', 375)
 GLOVE_EMBEDDINGS_URL = os.getenv('CAPE_GLOVE_EMBEDDINGS_URL', 'https://nlp.stanford.edu/data/glove.840B.300d.zip')
+
+LM_URL = os.getenv('CAPE_LM_URL', 'https://github.com/bloogram/cape-document-qa/releases/download/v0.1.0/lm.tar.bz2')

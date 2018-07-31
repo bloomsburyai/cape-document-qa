@@ -8,7 +8,6 @@ import tensorflow as tf
 import numpy as np
 import pickle
 from os.path import join
-import hashlib
 from cape_document_qa.cape_document_qa_settings import MODEL_FOLDER
 
 vocab_to_ignore = {'<S>', '</S>', '<UNK>', '!!!MAXTERMID'}
@@ -108,33 +107,6 @@ def get_production_model_config():
         vocab_file=join(MODEL_FOLDER, 'vocab.txt'),
         word_vector_file=join(MODEL_FOLDER, 'glove.840B.300d')
     )
-
-
-class RandomMachineReaderModel(CapeMachineReaderModelInterface):
-
-    def __init__(self, machine_reader_config):
-        self.tokenizer = NltkAndPunctTokenizer()
-
-    def tokenize(self, text):
-        tokens = self.tokenizer.tokenize_paragraph_flat(text)
-        spans = self.tokenizer.convert_to_spans(text, [tokens])[0]
-        return tokens, spans
-
-    def get_document_embedding(self, text):
-        np.random.seed(int(hashlib.sha1(text.encode()).hexdigest(), 16) % 10 ** 8)
-        document_tokens, _ = self.tokenize(text)
-        return np.random.random((len(document_tokens), 240))
-
-    def get_logits(self, question, document_embedding):
-        question_tokens, _ = self.tokenize(question)
-        n_words = document_embedding.shape[0]
-        qseed = int(hashlib.sha1(question.encode()).hexdigest(), 16) % 10 ** 8
-        dseed = int(np.sum(document_embedding) * 10 ** 6) % 10 ** 8
-        np.random.seed(dseed + qseed)
-        start_logits = np.random.random(n_words)
-        off = np.random.randint(1, 5)
-        end_logits = np.concatenate([np.zeros(off) + np.min(start_logits), start_logits[off:]])
-        return start_logits[:n_words], end_logits[:n_words]
 
 
 if __name__ == '__main__':

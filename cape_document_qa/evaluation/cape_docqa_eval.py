@@ -295,6 +295,7 @@ def perform_evaluation(model_name: str,
         checkpoint,
         not no_ema,
         async,
+        None,
         elmo_char_cnn
     )[corpus_name]
 
@@ -318,7 +319,7 @@ def main():
     parser.add_argument('model', help='model directory')
     parser.add_argument('-p', '--paragraph_output', type=str,
                         help="Save fine grained results for each paragraph in csv format")
-    parser.add_argument('-ag', '--aggregrated_output', type=str,
+    parser.add_argument('-ag', '--aggregated_output', type=str,
                         help="Save aggregated results in csv format")
     parser.add_argument('-o', '--official_output', type=str, help="Build an offical output file with the model's"
                                                                   " most confident span for each (question, doc) pair")
@@ -338,8 +339,10 @@ def main():
     parser.add_argument('--max_answer_len', type=int, default=50,
                         help="Max answer span to select")
     parser.add_argument('-d', '--datasets', nargs='+', default=['squad'], help='Which datasets to compute')
-    parser.add_argument('-c', '--elmo_character_cnn', default=True, type=bool, help='Use Elmo char CNN - if false, uses precomputed token representations')
-
+    parser.add_argument('-c', '--elmo_character_cnn', action='store_true', dest='elmo_character_cnn',
+                        help='Use Elmo char CNN - if false, uses precomputed token representations')
+    parser.add_argument('-no_c', '--no_elmo_character_cnn', action='store_false', dest='elmo_character_cnn')
+    parser.set_defaults(elmo_character_cnn=True)
     args = parser.parse_args()
 
     perform_evaluation(
@@ -355,7 +358,7 @@ def main():
         max_answer_len=args.max_answer_len,
         official_output_path=args.official_output,
         paragraph_output_path=args.paragraph_output,
-        aggregated_output_path=args.aggregrated_output,
+        aggregated_output_path=args.aggregated_output,
         elmo_char_cnn=args.elmo_character_cnn
     )
 

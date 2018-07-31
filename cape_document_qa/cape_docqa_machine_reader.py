@@ -114,9 +114,21 @@ if __name__ == '__main__':
     import time
 
     parser = argparse.ArgumentParser(description="Run model evaluation using Cape's model decoder")
-    parser.add_argument('model', help='path to model directory')
+    parser.add_argument('-m', '--model', default=None, help='path to model directory')
     args = parser.parse_args()
-    conf = get_production_model_config(args.model)
+    if args.model is not None:
+        conf = CapeDocQAMachineReaderConfig(
+            model_pickle_file=join(args.model, 'model.pkl'),
+            model_checkpoint_file=join(args.model, 'save', 'checkpoint-123456789'),
+            lm_weights_file=join(args.model, 'elmo_weights.hdf5'),
+            lm_token_weights_file=None,
+            lm_options_file=join(args.model, 'elmo_options.json'),
+            vocab_file=join(args.model, 'vocab.txt'),
+            word_vector_file=join(args.model, 'glove.840B.300d')
+        )
+    else:
+        conf = get_production_model_config()
+
     machine_reader = CapeDocQAMachineReaderModel(conf)
 
     context = '''"Super Bowl 50 was an American football game to determine the champion of the National Football League (NFL) for the 2015 season. The American Football Conference (AFC) champion Denver Broncos defeated the National Football Conference (NFC) champion Carolina Panthers 24\u201310 to earn their third Super Bowl title. The game was played on February 7, 2016, at Levi's Stadium in the San Francisco Bay Area at Santa Clara, California. As this was the 50th Super Bowl, the league emphasized the \"golden anniversary\" with various gold-themed initiatives, as well as temporarily suspending the tradition of naming each Super Bowl game with Roman numerals (under which the game would have been known as \"Super Bowl L\"), so that the logo could prominently feature the Arabic numerals 50."'''

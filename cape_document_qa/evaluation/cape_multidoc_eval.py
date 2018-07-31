@@ -227,7 +227,9 @@ def main():
     parser.add_argument('-bo', '--batch_opt', type=bool, default=True, help='Compute more than one question at a time (faster, but can get OOM)')
     parser.add_argument('-bs', '--batch_size', default=16, type=int, help='batch size to use for batch_opt option')
     parser.add_argument('-f', '--fold', default='dev', dest='fold', choices=["train", "dev", "test"], help='which fold to evaluate on')
-    parser.add_argument('-c', '--elmo_character_cnn', default=True, type=bool, help='Use Elmo char CNN - if false, uses precomputed token representations')
+    parser.add_argument('-c', '--elmo_character_cnn',  action='store_true', dest='elmo_character_cnn', help='Use Elmo char CNN - if false, uses precomputed token representations')
+    parser.add_argument('-no_c', '--no_elmo_character_cnn', action='store_false', dest='elmo_character_cnn')
+    parser.set_defaults(elmo_character_cnn=True)
     args = parser.parse_args()
 
     savepath = '{}_{}_top_{}_answers.json'

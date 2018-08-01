@@ -7,7 +7,8 @@ ujson==1.35
 mock==2.0.0
 numpy==1.15.0
 # We require >=0.18 to support the "expanding" function
-pandas>=0.18.0
+# latest version 0.23 will give an error, so we keep 0.22
+pandas=0.22
 pytest==3.6.4
 requests==2.18.1
 retry==0.9.2

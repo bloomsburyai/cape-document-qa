@@ -1,5 +1,6 @@
 from cape_document_qa import patches
 from tqdm import tqdm
+from typing import Union
 import pickle
 import os
 import tensorflow as tf
@@ -30,11 +31,13 @@ def init_model(sess, model_dir):
     sess.run(tf.variables_initializer([x for x in all_vars if x.name in lm_var_names]))
 
 
-def prepro(ds, fold, num_tokens_per_group, num_paragraphs, pad=True):
+def prepro(ds, fold, num_tokens_per_group, num_paragraphs, pad=True, n_samples=None):
     fold_funcs = {
         'train': lambda: ds.get_train(), 'dev': lambda: ds.get_dev(), 'test': lambda: ds.get_test()
     }
     qs = fold_funcs[fold]()
+    if n_samples is not None:
+        qs = qs[:n_samples]
     evidence = ds.evidence
 
     prep = None
@@ -165,7 +168,8 @@ def extract_answers(num_paragraphs: int,
                     verbose: bool,
                     batch_opt: bool,
                     batch_size: int,
-                    elmo_character_cnn: bool
+                    elmo_character_cnn: bool,
+                    n_samples: Union[None, int]
                     ):
     """Extract answers for a Cape-flavoured DocumentQA model. Uses Cape's answering mechanism
     to generate the top k scoring answering spans for document,question pairs from preprocessed Training/Dev/Test folds.
@@ -190,7 +194,7 @@ def extract_answers(num_paragraphs: int,
     ds = TriviaQaSpanCorpus(dataset_name)
 
     gold_answer_dict, batch_dict, voc = prepro(
-        ds, dataset_fold, num_tokens_per_group, num_paragraphs, pad=not batch_opt)
+        ds, dataset_fold, num_tokens_per_group, num_paragraphs, pad=not batch_opt, n_samples=n_samples)
 
     print("Loading Model")
     model = load_model(model_dir, elmo_character_cnn)
@@ -229,6 +233,7 @@ def main():
     parser.add_argument('-f', '--fold', default='dev', dest='fold', choices=["train", "dev", "test"], help='which fold to evaluate on')
     parser.add_argument('-c', '--elmo_character_cnn',  action='store_true', dest='elmo_character_cnn', help='Use Elmo char CNN - if false, uses precomputed token representations')
     parser.add_argument('-no_c', '--no_elmo_character_cnn', action='store_false', dest='elmo_character_cnn')
+    parser.add_argument('-s', '--samples', type=int, default=None, help='Number of samples to run, defaults to all')
     parser.set_defaults(elmo_character_cnn=True)
     args = parser.parse_args()
 
@@ -246,7 +251,8 @@ def main():
             verbose,
             args.batch_opt,
             args.batch_size,
-            args.elmo_character_cnn
+            args.elmo_character_cnn,
+            args.samples
         )
 
 

@@ -1,5 +1,5 @@
 from cape_document_qa import patches
-from cape_document_qa.patches import trainer_patches
+from cape_document_qa.patches import horovod_patches
 import argparse
 from datetime import datetime
 from typing import Optional, Dict
@@ -159,7 +159,7 @@ def get_training_params(train_config):
         num_epochs=train_config.n_epochs,
         ema=train_config.ema,
         max_checkpoints_to_keep=train_config.max_checkpoints_to_keep,
-        async_encoding=None,#train_config.async_encoding,
+        async_encoding=train_config.async_encoding,
         log_period=train_config.log_period,
         eval_period=train_config.eval_period,
         save_period=train_config.save_period,
@@ -190,7 +190,7 @@ def run_training(savename: str,
     :param n_processes: Number of processes to paralellize prepro on
     :param use_cudnn: Whether to train with GRU's optimized for Cudnn (recommended)
     """
-
+    hvd.init()
     model = build_model(WithIndicators(), train_config, use_cudnn=use_cudnn)
     data = prepare_data(model, train_config, dataset_oversampling, n_processes)
     eval = get_evaluators(train_config)
@@ -221,7 +221,7 @@ def main():
     if args.dataset_sampling == '':
         dataset_sampling = {'wiki': 1, 'web': 1, 'squad': 1}
     else:
-        dataset_sampling = json.load(open(args.dataset_oversampling))
+        dataset_sampling = json.load(open(args.dataset_sampling))
     train_conf = TrainConfig()
     out = args.name + "-" + datetime.now().strftime("%m%d-%H%M%S")
     run_training(out, train_conf, dataset_sampling, args.n_processes, args.cudnn)

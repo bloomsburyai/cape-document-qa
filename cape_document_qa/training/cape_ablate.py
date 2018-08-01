@@ -218,7 +218,7 @@ def main():
     if args.dataset_sampling == '':
         dataset_sampling = {'wiki': 1, 'web': 1, 'squad': 1}
     else:
-        dataset_sampling = json.load(open(args.dataset_oversampling))
+        dataset_sampling = json.load(open(args.dataset_sampling))
     train_conf = TrainConfig()
     out = args.name + "-" + datetime.now().strftime("%m%d-%H%M%S")
     run_training(out, train_conf, dataset_sampling, args.n_processes, args.cudnn)

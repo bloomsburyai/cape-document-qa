@@ -1,7 +1,7 @@
 from cape_document_qa import patches
 import argparse
 import json
-from typing import List, Dict
+from typing import List, Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -247,7 +247,8 @@ def perform_evaluation(model_name: str,
                        official_output_path: str,
                        paragraph_output_path: str,
                        aggregated_output_path: str,
-                       elmo_char_cnn: bool
+                       elmo_char_cnn: bool,
+                       n_samples: Union[int, None]
                        ):
     """Perform an evaluation using cape's answer decoder
 
@@ -295,7 +296,7 @@ def perform_evaluation(model_name: str,
         checkpoint,
         not no_ema,
         async,
-        None,
+        n_samples,
         elmo_char_cnn
     )[corpus_name]
 
@@ -342,6 +343,8 @@ def main():
     parser.add_argument('-c', '--elmo_character_cnn', action='store_true', dest='elmo_character_cnn',
                         help='Use Elmo char CNN - if false, uses precomputed token representations')
     parser.add_argument('-no_c', '--no_elmo_character_cnn', action='store_false', dest='elmo_character_cnn')
+    parser.add_argument('-s', '--samples', type=int, default=None, help='Number of samples to run, defaults to all')
+
     parser.set_defaults(elmo_character_cnn=True)
     args = parser.parse_args()
 
@@ -359,7 +362,8 @@ def main():
         official_output_path=args.official_output,
         paragraph_output_path=args.paragraph_output,
         aggregated_output_path=args.aggregated_output,
-        elmo_char_cnn=args.elmo_character_cnn
+        elmo_char_cnn=args.elmo_character_cnn,
+        n_samples=args.samples
     )
 
 

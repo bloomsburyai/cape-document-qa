@@ -74,15 +74,6 @@ pytest cape_document_qa
 If you are training models, you may find it easier to do a local install.
 In this case, you should ensure that the docqa module within document-qa is on your PYTHONPATH.
 
-e.g.:
-```
-git clone https://github.com/bloogram/cape-document-qa.git
-cd cape-document-qa
-export PYTHONPATH="${PYTHONPATH}:./document-qa/"
-pip install -r requirements.txt
-```
-
-
 ## Training Models
 
 Training your own models is encouraged. You can use the `cape-document-qa` training scripts to train and tweak

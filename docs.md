@@ -68,11 +68,46 @@ To check that the install is successful, we can run the tests:
 pytest cape_document_qa
 ```
 
+## For users who want to run a quick evalation:
 
-### Setup for users wanting to train models
+There is a script that will allow users to evaluate datasets in the squad format. 
+This is useful for those who have some data for their domain, and just want to
+see how the pretrained model performs.
+This can be done easily:
 
-If you are training models, you may find it easier to do a local install.
-In this case, you should ensure that the docqa module within document-qa is on your PYTHONPATH.
+```
+>>> from cape_document_qa.evaluation.evaluate_benchmark import perform_benchmark_evaluation
+>>> perform_benchmark_evaluation('my_dataset', 'path/to/my/dataset-v1.1.json')
+
+Preprocessing Squad Dataset: my_dataset
+100%|█████████████████████████████████████████████| 1/1 [00:00<00:00, 21.83it/s]
+dev: 100%|████████████████████████████████████████| 1/1 [00:00<00:00, 51.41it/s]
+Dumping file mapping
+Dumping vocab mapping
+Setting Up:
+Had pre-trained word embeddings for 149 of 149 words
+Building question/paragraph pairs...
+Processing 8 chunks with 8 processes
+100%|██████████████████████████████████████████| 55/55 [00:00<00:00, 365.91it/s]
+Starting Eval
+my_dataset: 100%|█████████████████████████████████| 1/1 [00:24<00:00, 24.70s/it]
+scoring: 100%|████████████████████████████████| 55/55 [00:00<00:00, 7454.73it/s]
+Exporting and Post-processing
+Saving question result
+Saving paragraph result
+Computing scores
+```
+or equivalently from the command line:
+```
+python -m cape_document_qa.evaluation.evaluate_benchmark -n my_dataset -t ../squad/squad-dev-mini2-v1.1.json
+```
+
+This will create 3 output files, by default named:
+
+* {my_dataset}_official_output.json which can be used in squad official evaluation scripts
+* {my_dataset}_aggregated_output.csv which includes the F1 and EM scores as the number of paragraphs increases
+* {my_dataset}_paragraph_output.csv which includes detailed information about the answers
+
 
 ## Training Models
 
@@ -82,39 +117,39 @@ be achievable too, you just need to make your model inherit the
 cape-machine-reader.cape_machine_reader_model.CapeMachineReaderModelInterface interface. 
 (see cape_document_qa.cape_docqa_machine_reader for an example).
 
-We suggest using our model as a good starting place to fine tune your own models. 
+### Setup for users wanting to train models
+
+If you are training models, you may find it easier to do a local install.
+In this case, you should ensure that the docqa module within document-qa is on your PYTHONPATH.
+
+We suggest using our model configs as a good starting place to fine tune your own models. 
 
 Training a model requires you to
 
-1) download the data needed to train models
-2) preprocess the data
+1) download the traind data and preprocess
 3) run the training script
 4) evaluate the model
 5) make the model "production ready".
 
 These steps are described below. Each is can be achieved by running one or two scripts
 
-### Data:
-
-Datasets for training, and other resources (including ELMO parameters) are downloaded and handled
-by the `cape_document_qa.training.download_training_resources` script:
-
-```
-python -m cape_document_qa.training.download_training_resources
-```
-Training data will be automatically triggered when `cape_document_qa.training` or `cape_document_qa.preprocess` is imported
-
-This script will download Elmo parameters, the squad dataset, the web and wiki triviaqa datasets and glove vectors
-
-By default, we expect source data to be stored in `\~/data` and preprocessed data to be
-stored in `{project_root}/data`. These can be changed by altering `cape_document_qa/cape_config.py`
-
-
-### Preprocessing:
+### Data and preprocessing:
 
 Before training, There is significant preprocessing that needs to be done.
 This process can take several hours (if preprocessing all of squad and triviaqa). By default
-most of the pipeline is multi-processed (default is 8 processes)
+most of the pipeline is multi-processed (default is 8 processes).
+
+Datasets for training, and other resources (including ELMO parameters) are downloaded and handled
+Downloading the Training data will be automatically triggered when running the  `cape_document_qa.cape_preprocess ` script
+
+The following are downloaded: 
+ 1. Elmo parameters, 
+ 2. the squad dataset, 
+ 3. the web and wiki triviaqa datasets
+ 4. glove vectors
+
+By default, we expect source data to be stored in `\~/data` and preprocessed data to be
+stored in `{project_root}/data`. These can be changed by altering `cape_document_qa/cape_config.py`
 
 Preprocessing can be run by:
 ```

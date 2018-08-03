@@ -137,7 +137,7 @@ def perform_benchmark_evaluation(dataset_name: str,
                                  per_document: bool=False,
                                  ):
     """"""
-    official_output_path = '{}_official_output.csv'.format(dataset_name) \
+    official_output_path = '{}_official_output.json'.format(dataset_name) \
         if official_output_path is None else official_output_path
     aggregated_output_path = '{}_aggregated_output.csv'.format(dataset_name) \
         if aggregated_output_path is None else aggregated_output_path

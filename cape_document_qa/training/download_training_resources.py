@@ -14,10 +14,14 @@ def training_downloads():
 
     # Glove:
     info('Downloading Glove Embeddings:')
+    if not os.path.exists(VEC_DIR):
+        os.makedirs(VEC_DIR)
     download_and_extract(GLOVE_EMBEDDINGS_URL, VEC_DIR)
 
     # Squad:
     info('Downloading Squad:')
+    if not os.path.exists(SQUAD_SOURCE_DIR):
+        os.makedirs(SQUAD_SOURCE_DIR)
     download_file(SQUAD_SERVER + '/train-v1.1.json', SQUAD_SOURCE_DIR)
     download_file(SQUAD_SERVER + '/dev-v1.1.json', SQUAD_SOURCE_DIR)
 

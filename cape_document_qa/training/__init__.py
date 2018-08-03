@@ -1,3 +1,0 @@
-from cape_document_qa.training import download_training_resources
-
-download_training_resources.training_downloads()

@@ -94,14 +94,14 @@ def preprocess_squad_dataset(name: str, fold_dict: Dict):
     e.g. {'train': ['path/to/train.json'], 'dev': ['path/to/dev.json'], 'test': ['path/to/test.json']]}
     """
 
-    print('Preprocessing Squad File: {}'.format(name))
+    print('Preprocessing Squad Dataset: {}'.format(name))
     if not exists(get_out_dir(name)):
         makedirs(get_out_dir(name))
 
     voc, file_map = set(), {}
     for fold, squad_file_paths in fold_dict.items():
         fold_voc, fold_file_map = prepro_squad_fold(name, fold, squad_file_paths)
-        voc.update(voc)
+        voc.update(fold_voc)
         for k, v in fold_file_map.items():
             file_map[k] = v
 
@@ -116,27 +116,27 @@ def preprocess_squad_dataset(name: str, fold_dict: Dict):
             f.write("\n")
 
 
-def main():
-    datasets = {
-        'squad': ['squad-{}-v1.1.json'],
-        'insurance': ['insurance_batch_1-{}-v1.1.json'],
-        'legal': ['legal-{}-v1.1.json'],
-        'mifid-gdpr': [
-            'mifid_gdpr-{}-v1.1.json',
-            'mifid_gdpr_batch_2-{}-v1.1.json',
-            'mifid-{}-v1.1.json'
-        ],
-        'tendomains': ['tendomains-{}-v1.1.json'],
-        'travel': ['travel-{}-v1.1.json'],
+def squad_dict():
+    return 'squad', {
+        'train': [join(SQUAD_SOURCE_DIR, 'train-v1.1.json')],
+        'dev': [join(SQUAD_SOURCE_DIR, 'dev-v1.1.json')],
+        'test': [join(SQUAD_SOURCE_DIR, 'dev-v1.1.json')],
     }
-    for title, files in datasets.items():
-        fold_dict = {
-            'train': [join(SQUAD_SOURCE_DIR, f.format('train')) for f in files],
-            'dev': [join(SQUAD_SOURCE_DIR, f.format('dev')) for f in files],
-            'test': [join(SQUAD_SOURCE_DIR, f.format('dev')) for f in files],
-        }
-        preprocess_squad_dataset(title, fold_dict)
 
 
 if __name__ == '__main__':
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Perform dataset preprocessing for Squad models.")
+    parser.add_argument('-n', '--dataset_name', type=str, default=None, dest='title', help='name of dataset to preprocess')
+    parser.add_argument('-tr', '--train_files', nargs='+', default=[], help='Which datasets to compute')
+    parser.add_argument('-dv', '--dev_files', nargs='+', default=[], help='Which datasets to compute')
+    parser.add_argument('-ts', '--test_files', nargs='+', default=[], help='Which datasets to compute')
+    args = parser.parse_args()
+
+    if args.title is None:
+        title, fold_dict = squad_dict()
+    else:
+        title = args.title
+        fold_dict = {'train': args.train_files, 'dev': args.dev_files, 'test': args.test_files}
+    preprocess_squad_dataset(title, fold_dict)

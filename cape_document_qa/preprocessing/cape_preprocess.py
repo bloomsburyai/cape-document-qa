@@ -92,7 +92,13 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--n_processes', type=int, default=8, help="Number of processes for preprocessing")
     parser.add_argument('-c', '--elmo_min_word_count', type=int, default=100,
                         help="minimum number of occurrences of a word before an elmo vector is computed for it")
+    parser.add_argument('--prevent_download', action='store_True', dest='prevent_download', help='if flag is set, automatic dataset downloads will be prevented')
+    parser.set_defaults(prevent_download=False)
     args = parser.parse_args()
+
+    if not args.prevent_download:
+        from cape_document_qa.training import download_training_resources
+        download_training_resources.training_downloads()
 
     if args.dataset_dict == '':
         dataset_dict = default_dataset_dict()

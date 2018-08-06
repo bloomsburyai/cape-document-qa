@@ -1,14 +1,12 @@
-import tensorflow as tf
 from docqa import trainer
 import horovod.tensorflow as hvd
 import time
-from os.path import exists, join, relpath
-from typing import List, Union, Optional, Dict, Tuple
-from tqdm import tqdm
+from os.path import join, relpath
+from typing import List, Union
 import numpy as np
 import tensorflow as tf
 from docqa.dataset import TrainingData
-from docqa.evaluator import Evaluator, EvaluatorRunner, AysncEvaluatorRunner
+from docqa.evaluator import Evaluator, AysncEvaluatorRunner
 from docqa.model import Model
 from docqa.model_dir import ModelDir
 from threading import Thread
@@ -118,109 +116,8 @@ def _train(model: Model,
         _train_async(model, data, checkpoint, parameter_checkpoint, save_start, train_params,
                  evaluators, out, notes, dry_run, start_eval)
         return
-    tf.logging.set_verbosity(tf.logging.INFO)
-
-    # spec the model for the current voc/input/batching
-    train = data.get_train()
-    eval_datasets = data.get_eval()
-    loader = data.get_resource_loader()
-    evaluator_runner = EvaluatorRunner(evaluators, model)
-
-    print("Training on %d batches" % len(train))
-    print("Evaluation datasets: " + " ".join("%s (%d)" % (name, len(data)) for name, data in eval_datasets.items()))
-
-    print("Init model...")
-    model.set_inputs([train] + list(eval_datasets.values()), loader)
-
-    config = tf.ConfigProto()
-    config.gpu_options.visible_device_list = str(hvd.local_rank())
-    global_step = tf.train.get_or_create_global_step()
-    sess = tf.Session(config=config)
-
-    with sess.as_default():
-        pred = model.get_prediction()
-    sess.close()
-    del(sess)
-    evaluator_runner.set_input(pred)
-
-    loss, summary_tensor, train_opt, global_step, _ = _build_train_ops(train_params)
-    eval_tensors = []
-    for ev in evaluators:
-        eval_tensors.append(ev.tensors_needed(pred))
-    if hvd.rank() == 0:
-        saver = tf.train.Saver(max_to_keep=train_params.max_checkpoints_to_keep)
-
-    summary_writer = tf.summary.FileWriter(out.log_dir)
-    checkpoint_dir = out.save_dir if hvd.rank() == 0 else None
-
-    hooks = [
-        hvd.BroadcastGlobalVariablesHook(0),
-        tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss},
-                                   every_n_iter=10),
-        tf.train.SummarySaverHook(
-            save_steps=train_params.log_period,
-            summary_writer=summary_writer,
-            summary_op=summary_tensor
-        ),
-        tf.train.CheckpointSaverHook(
-            checkpoint_dir=checkpoint_dir,
-            save_steps=train_params.save_period,
-            saver=saver
-        ),
-        tf.train.StopAtStepHook(last_step=10000),
-    ]
-
-
-    print("Setting up model prediction / tf...")
-    checkpoint_dir = out.save_dir if hvd.rank() == 0 else None
-
-    if parameter_checkpoint is not None:
-        print("Initializing training variables...")
-        vars = [x for x in tf.global_variables() if x not in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)]
-        init_op = tf.variables_initializer(vars)
     else:
-        print("Initializing parameters...")
-        init_op = tf.global_variables_initializer()
-
-    scaffold = tf.train.Scaffold(init_op=init_op)
-
-    with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
-                                           config=config,
-                                           hooks=hooks,
-                                           scaffold=scaffold) as sess:
-
-        while not sess.should_stop():
-            for epoch in range(train_params.num_epochs):
-                for batch_ix, batch in enumerate(tqdm(train.get_epoch())):
-                    on_step = sess.run(global_step) + 1  # +1 because all calculations are done after step
-
-                    encoded = model.encode(batch, True)
-                    _, batch_loss = sess.run([train_opt, loss], feed_dict=encoded)
-
-                    if np.isnan(batch_loss):
-                        raise RuntimeError("NaN loss!")
-
-                    if hvd.rank() == 0:
-                        # occasional saving
-                        if on_step % train_params.save_period == 0:
-                            print("Checkpointing")
-                            saver.save(sess, join(out.save_dir, "checkpoint-" + str(on_step)), global_step=global_step)
-
-                    # Occasional evaluation
-                    if (on_step % train_params.eval_period == 0) or start_eval:
-                        print("Running evaluation...")
-                        start_eval = False
-                        t0 = time.perf_counter()
-                        for name, data in eval_datasets.items():
-                            n_samples = train_params.eval_samples.get(name)
-                            evaluation = evaluator_runner.run_evaluators(sess, data, name, n_samples)
-                            for s in evaluation.to_summaries(name + "-"):
-                                summary_writer.add_summary(s, on_step)
-
-                        print("Evaluation took: %.3f seconds" % (time.perf_counter() - t0))
-
-            if hvd.rank() == 0:
-                saver.save(sess, relpath(join(out.save_dir, "checkpoint-" + str(on_step))), global_step=global_step)
+        raise NotImplementedError('Syncronous training with Horovod not supported yet')
 
 
 def _train_async(model: Model,
@@ -325,7 +222,8 @@ def _train_async(model: Model,
 
     if save_start:
         # summary_writer.add_graph(sess.graph, global_step=on_step)
-        trainer.save_train_start(out.dir, data, sess.run(global_step), evaluators, train_params, notes)
+        if hvd.rank() == 0:
+            trainer.save_train_start(out.dir, data, sess.run(global_step), evaluators, train_params, notes)
 
     def enqueue_train():
         try:
@@ -379,19 +277,20 @@ def _train_async(model: Model,
                         summary_writer.add_summary(summary, on_step)
                         batch_time = 0
 
-                    # occasional saving
+                # occasional saving
+                if hvd.rank() == 0:
                     if on_step % train_params.save_period == 0:
                         print("Checkpointing")
                         saver.save(sess, join(out.save_dir, "checkpoint-" + str(on_step)), global_step=global_step)
-
-                    # Occasional evaluation
-                    if (on_step % train_params.eval_period == 0) or start_eval:
-                        print("Running evaluation...")
-                        start_eval = False
-                        t0 = time.perf_counter()
-                        for name, data in eval_datasets.items():
-                            n_samples = train_params.eval_samples.get(name)
-                            evaluation = evaluator_runner.run_evaluators(sess, data, name, n_samples, eval_dict)
+                # Occasional evaluation
+                if (on_step % train_params.eval_period == 0) or start_eval:
+                    print("Running evaluation...")
+                    start_eval = False
+                    t0 = time.perf_counter()
+                    for name, data in eval_datasets.items():
+                        n_samples = train_params.eval_samples.get(name)
+                        evaluation = evaluator_runner.run_evaluators(sess, data, name, n_samples, eval_dict)
+                        if hvd.rank() == 0:
                             for s in evaluation.to_summaries(name + "-"):
                                 summary_writer.add_summary(s, on_step)
 
@@ -404,7 +303,7 @@ def _train_async(model: Model,
                                     best_weight_saver.save(sess, join(out.best_weight_dir, "best"), global_step=global_step)
                                     cur_best = val
 
-                        print("Evaluation took: %.3f seconds" % (time.perf_counter() - t0))
+                            print("Evaluation took: %.3f seconds" % (time.perf_counter() - t0))
     finally:
         sess.run(train_close)  # terminates the enqueue thread with an exception
 

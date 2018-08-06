@@ -105,4 +105,4 @@ if __name__ == '__main__':
     else:
         dataset_dict = json.load(open(args.dataset_dict))
 
-    main(dataset_dict, n_procs=args.n_processes, elmo_min_word_count=args.elmo_min_word_count, not args.prevent_download)
+    main(dataset_dict, n_procs=args.n_processes, elmo_min_word_count=args.elmo_min_word_count, download=not args.prevent_download)

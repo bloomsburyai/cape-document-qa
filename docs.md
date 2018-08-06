@@ -6,7 +6,7 @@ recent state of the art approach in open domain question answering.
 ### Who is this repo for:
 
 This repo enables training and evaluation of models, and to provide a standard model for Cape.
-the primary purpose of this repo is to train and evalauate models that implement the
+the primary purpose of this repo is to train and evaluate models that implement the
  `cape-machine-reader.cape_machine_reader_model.CapeMachineReaderModelInterface` interface. 
 
 ### Who is this repo not for:
@@ -68,7 +68,7 @@ To check that the install is successful, we can run the tests:
 pytest cape_document_qa
 ```
 
-## For users who want to run a quick evalation:
+## For users who want to run a quick evaluation:
 
 There is a script that will allow users to evaluate datasets in the squad format. 
 This is useful for those who have some data for their domain, and just want to
@@ -116,8 +116,8 @@ This will create 3 output files, by default named:
 Training your own models is encouraged. You can use the `cape-document-qa` training scripts to train and tweak
 models. If you want to define your own architecture, or even use your own codebase to train a model, this should
 be achievable too, you just need to make your model inherit the 
-cape-machine-reader.cape_machine_reader_model.CapeMachineReaderModelInterface interface. 
-(see cape_document_qa.cape_docqa_machine_reader for an example).
+`cape-machine-reader.cape_machine_reader_model.CapeMachineReaderModelInterface` interface. 
+(see `cape_document_qa.cape_docqa_machine_reader` for an example).
 
 ### Setup for users wanting to train models
 
@@ -257,7 +257,7 @@ python -m cape_document_qa.training.cape_resume_training path/to/my/model --data
 
 ### Evaluating a model:
 
-When a model has finished, there are two evalation scripts. One uses document-qa's own evaluation
+When a model has finished, there are two evalution scripts. One uses document-qa's own evaluation
 pipeline and can be called like:
 
 ```
@@ -334,7 +334,7 @@ python -m cape_document_qa.evaluation.cape_docqa_eval my_model \
     --official_output my_model_official_output.json \
     --datasets my_dataset
 
-# evaluate how well Cape's multiple answering method performs on my datasset:
+# evaluate how well Cape's multiple answering method performs on my_dataset:
 python -m cape_document_qa.evaluation.cape_multidoc_eval my_model -k 5 --datasets my_dataset
 
 
@@ -348,4 +348,12 @@ We have an experimental [Horovod](https://github.com/uber/horovod) implementatio
 This is not thoroughly tested but can be used to train models using `cape_document_qa.training.cape_ablate_horovod`. 
 This script is analogous to `cape_document_qa.training.cape_ablate`.
 You should run it using OpenMPI (which we assume you already have installed.)
-
+E.g. to run on 4 GPUs on the local machine:
+```
+mpirun -np 4 \
+    -H localhost:4 \
+    -bind-to none -map-by slot \
+    -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH -x PATH \
+    -mca pml ob1 -mca btl ^openib \
+    python -m cape_document_qa.training.cape_ablate_horovod horovod --n_processes 4
+```

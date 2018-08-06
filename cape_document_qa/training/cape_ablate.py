@@ -1,4 +1,6 @@
 from cape_document_qa import patches
+from cape_document_qa import cape_config
+from cape_document_qa.cape_config import LM_VOCAB, LM_OPTIONS, LM_WEIGHTS, LM_TOKEN_WEIGHTS, TrainConfig
 import argparse
 from datetime import datetime
 from typing import Optional, Dict
@@ -8,7 +10,6 @@ from docqa import trainer
 from docqa.data_processing.document_splitter import ShallowOpenWebRanker
 from docqa.triviaqa.build_span_corpus import TriviaQaSpanCorpus
 from docqa.triviaqa.training_data import ExtractMultiParagraphsPerQuestion
-
 from docqa.data_processing.document_splitter import MergeParagraphs
 from docqa.data_processing.multi_paragraph_qa import StratifyParagraphSetsBuilder, RandomParagraphSetDatasetBuilder
 from docqa.data_processing.preprocessed_corpus import PreprocessedData
@@ -26,7 +27,6 @@ from docqa.elmo.elmo import ElmoLayer
 from cape_document_qa.cape_models.cape_lm_qa_models import CapeAttentionWithElmo
 from cape_document_qa.multi_dataset import MultiDataset
 from docqa.elmo.lm_model import LanguageModel
-from cape_document_qa.cape_config import LM_VOCAB, LM_OPTIONS, LM_WEIGHTS, LM_TOKEN_WEIGHTS, TrainConfig
 from docqa.evaluator import LossEvaluator, MultiParagraphSpanEvaluator
 
 

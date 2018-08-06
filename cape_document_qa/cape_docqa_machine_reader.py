@@ -155,4 +155,3 @@ if __name__ == '__main__':
         print(context[st[0]: en[1]])
     t3 = time.time()
     print('Cached reading takes {} seconds'.format((t3 - t2) / num_trials))
-#

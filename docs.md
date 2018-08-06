@@ -76,6 +76,7 @@ see how the pretrained model performs.
 This can be done easily:
 
 ```
+$ python3
 >>> from cape_document_qa.evaluation.evaluate_benchmark import perform_benchmark_evaluation
 >>> perform_benchmark_evaluation('my_dataset', ['path/to/my/dataset-v1.1.json'])
 
@@ -289,3 +290,62 @@ cape_document_qa.cape_productionize_model --target_model path/to/my/trained_mode
 This will also convert the RNNs to be CPU compatible, so can be run on systems without nvidia gpus. This
 production ready model can now be used by `cape_document_qa.cape_docqa_machine_reader` and be used
 by the rest of the stack.
+
+### Putting it all together:
+
+The entire training procedure could be achieved using something like the following :
+
+```
+# define the datasets to prepro
+echo '{
+    "triviaqa_datasets": ["wiki", "web"],
+    "squad_datasets":{
+        "squad": {
+            "train": ["squad-train-v1.1.json"],
+            "dev": ["squad-dev-v1.1.json"],
+            "test": ["squad-dev-v1.1.json"],
+        },
+        "my_dataset" : {
+            "train": ["my_dataset-train-v1.1.json"]
+            "dev": ["my_dataset-dev-v1.1.json"],
+            "test": ["my_dataset-test-v1.1.json"],
+        }
+    }
+}' > datasets_to_prepro.json
+
+# define the equivalences of each dataset to train on:
+echo '{
+      "wiki": 1,
+      "web": 1,
+      "squad": 1,
+      "my_dataset": 2,
+}' > dataset_sampling.json
+
+# Preprocess for a few hours
+python -m cape_document_qa.cape_preprocess --dataset_dict datasets_to_prepro.json
+
+# train for many hours
+python -m cape_document_qa.training.cape_ablate my_model --dataset_sampling datset_sampling.json --cudnn
+
+# evaluate how well the model performs on my_dataset using document_qa
+python -m cape_document_qa.evaluation.cape_docqa_eval my_model \
+    --paragraph_output my_model_paragraph_output.csv \
+    --aggregated_output my_model_aggregated_output.csv \
+    --official_output my_model_official_output.json \
+    --datasets my_dataset
+
+# evaluate how well Cape's multiple answering method performs on my datasset:
+python -m cape_document_qa.evaluation.cape_multidoc_eval my_model -k 5 --datasets my_dataset
+
+
+# all has gone well, productionize my model
+cape_document_qa.cape_productionize_model --target_model my_model --output_dir my_production_model
+```
+
+### But I have LOADS of GPUs and want to use them...
+
+We have an experimental [Horovod](https://github.com/uber/horovod) implementation that will allow you to scale up your training to several GPUS or even several nodes.
+This is not thoroughly tested but can be used to train models using `cape_document_qa.training.cape_ablate_horovod`. 
+This script is analogous to `cape_document_qa.training.cape_ablate`.
+You should run it using OpenMPI (which we assume you already have installed.)
+

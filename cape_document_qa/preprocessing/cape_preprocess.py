@@ -67,14 +67,18 @@ def default_dataset_dict():
     }
 
 
-def main(datasets_dict, n_procs=8, elmo_min_word_count=100):
+def main(datasets_dict, n_procs=8, elmo_min_word_count=100, download=True):
     """Preprocess datasets for training
 
     :param datasets_dict: a dictionary specifying the dataset folds and filenames
         to preprocess, see `default_dataset_dict()` for an example
     :param n_procs: number of processes to use
     :param elmo_min_word_count: minimum number of occurrences of a word before an elmo vector is computed for it
+    :param Download - if true, the necessary training datasets will be downloaded
     """
+    if download:
+        from cape_document_qa.training import download_training_resources
+        download_training_resources.training_downloads()
     full_preprocessing_pipeline(
         squad_datasets=datasets_dict['squad_datasets'],
         triviaqa_datasets=datasets_dict['triviaqa_datasets'],
@@ -96,13 +100,9 @@ if __name__ == '__main__':
     parser.set_defaults(prevent_download=False)
     args = parser.parse_args()
 
-    if not args.prevent_download:
-        from cape_document_qa.training import download_training_resources
-        download_training_resources.training_downloads()
-
     if args.dataset_dict == '':
         dataset_dict = default_dataset_dict()
     else:
         dataset_dict = json.load(open(args.dataset_dict))
 
-    main(dataset_dict, n_procs=args.n_processes, elmo_min_word_count=args.elmo_min_word_count)
+    main(dataset_dict, n_procs=args.n_processes, elmo_min_word_count=args.elmo_min_word_count, not args.prevent_download)

@@ -119,6 +119,9 @@ def perform_evaluation(model_config: CapeDocQAMachineReaderConfig,
     print("Computing scores")
     agg_df = get_aggregated_df(df, per_document)
     agg_df.to_csv(aggregated_output_path, index=False)
+    sess.close()
+    del sess
+    tf.reset_default_graph()
 
 
 def perform_benchmark_evaluation(dataset_name: str,

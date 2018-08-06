@@ -77,7 +77,7 @@ This can be done easily:
 
 ```
 >>> from cape_document_qa.evaluation.evaluate_benchmark import perform_benchmark_evaluation
->>> perform_benchmark_evaluation('my_dataset', 'path/to/my/dataset-v1.1.json')
+>>> perform_benchmark_evaluation('my_dataset', ['path/to/my/dataset-v1.1.json'])
 
 Preprocessing Squad Dataset: my_dataset
 100%|█████████████████████████████████████████████| 1/1 [00:00<00:00, 21.83it/s]
@@ -97,9 +97,10 @@ Saving question result
 Saving paragraph result
 Computing scores
 ```
+
 or equivalently from the command line:
 ```
-python -m cape_document_qa.evaluation.evaluate_benchmark -n my_dataset -t ../squad/squad-dev-mini2-v1.1.json
+python -m cape_document_qa.evaluation.evaluate_benchmark -n my_dataset -t 'path/to/my/dataset-v1.1.json'
 ```
 
 This will create 3 output files, by default named:
@@ -109,7 +110,7 @@ This will create 3 output files, by default named:
 * {my_dataset}_paragraph_output.csv which includes detailed information about the answers
 
 
-## Training Models
+# Training Models
 
 Training your own models is encouraged. You can use the `cape-document-qa` training scripts to train and tweak
 models. If you want to define your own architecture, or even use your own codebase to train a model, this should
@@ -137,7 +138,7 @@ These steps are described below. Each is can be achieved by running one or two s
 
 Before training, There is significant preprocessing that needs to be done.
 This process can take several hours (if preprocessing all of squad and triviaqa). By default
-most of the pipeline is multi-processed (default is 8 processes).
+most of the pipeline is multi-threaded (default is 8 processes).
 
 Datasets for training, and other resources (including ELMO parameters) are downloaded and handled
 Downloading the Training data will be automatically triggered when running the  `cape_document_qa.cape_preprocess ` script

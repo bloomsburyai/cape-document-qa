@@ -10,4 +10,4 @@ MODEL_MB_SIZE = os.getenv('CAPE_MODEL_MB_SIZE', 422)
 DOWNLOAD_ALL_GLOVE_EMBEDDINGS = os.getenv('DOWNLOAD_ALL_GLOVE_EMBEDDINGS', 'False').lower() == 'true'
 GLOVE_EMBEDDINGS_URL = os.getenv('CAPE_GLOVE_EMBEDDINGS_URL', 'https://nlp.stanford.edu/data/glove.840B.300d.zip')
 
-LM_URL = os.getenv('CAPE_LM_URL', 'https://github.com/bloogram/cape-document-qa/releases/download/v0.1.0/lm.tar.bz2')
+LM_URL = os.getenv('CAPE_LM_URL', 'https://github.com/bloogram/cape-document-qa/releases/download/v0.1.2/lm.tar.bz2')

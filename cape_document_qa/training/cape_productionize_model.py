@@ -45,7 +45,8 @@ def copy_elmo_resources(output_dir):
     copy2(LM_TOKEN_WEIGHTS, output_dir) # possibly remove, not necessary
 
 
-def productionize(model_dir, output_dir, train_config, convert_from_cudnn=TrainConfig):
+def productionize(model_dir, output_dir, train_config=None, convert_from_cudnn=True):
+    train_config = train_config if train_config is not None else TrainConfig
     if exists(output_dir):
         raise Exception('Output destination already exists')
     if convert_from_cudnn:
@@ -56,7 +57,7 @@ def productionize(model_dir, output_dir, train_config, convert_from_cudnn=TrainC
         copy2(join(model_dir, 'model.pkl'), join(output_dir, 'model.pkl'))
         copy_checkpoint(model_dir, output_dir)
 
-    copy_word_vectors(train_config, output_dir)
+    #copy_word_vectors(train_config, output_dir)
     copy_elmo_resources(output_dir)
 
 
@@ -71,9 +72,5 @@ def main():
     args = parser.parse_args()
     productionize(args.target_model, args.output_dir, convert_from_cudnn=args.cudnn)
 
-
-
-
-
-
-
+if __name__ == '__main__':
+    main()

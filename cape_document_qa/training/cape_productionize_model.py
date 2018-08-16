@@ -42,7 +42,8 @@ def copy_word_vectors(train_config, output_dir):
 def copy_elmo_resources(output_dir):
     copy2(LM_WEIGHTS, output_dir)
     copy2(LM_OPTIONS, output_dir)
-    copy2(LM_TOKEN_WEIGHTS, output_dir) # possibly remove, not necessary
+    copy2(LM_VOCAB, output_dir)
+    #copy2(LM_TOKEN_WEIGHTS, output_dir) # possibly remove, not necessary
 
 
 def productionize(model_dir, output_dir, train_config=None, convert_from_cudnn=True):

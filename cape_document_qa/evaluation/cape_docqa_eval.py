@@ -171,17 +171,24 @@ def get_questions(per_document, dataset, splitter, para_filter, preprocessor, n_
     return test_questions, n_questions
 
 
-def compute_and_dump_official_output(df, savename):
+def compute_and_dump_official_output(df, savename, per_document=False):
     print("Saving question result")
     answers = {}
     scores = {}
     for q_id, doc_id, start, end, txt, score in df[
         ["question_id", "doc_id", "para_start", "para_end", "text_answer", "predicted_score"]].itertuples(index=False):
         key = q_id
-        prev_score = scores.get(key)
-        if prev_score is None or prev_score < score:
-            scores[key] = score
-            answers[key] = txt
+        if per_document:
+            doc_key = key + '--' + doc_id
+            prev_score = scores.get(doc_key)
+            if prev_score is None or prev_score < score:
+                scores[doc_key] = score
+                answers[doc_key] = str(txt)
+        else:
+            prev_score = scores.get(key)
+            if prev_score is None or prev_score < score:
+                scores[key] = score
+                answers[key] = txt
 
     with open(savename, "w", encoding='utf8') as f:
         json.dump(answers, f)
@@ -262,7 +269,8 @@ def perform_evaluation(model_name: str,
                        paragraph_output_path: str,
                        aggregated_output_path: str,
                        elmo_char_cnn: bool,
-                       n_samples: Union[int, None]
+                       n_samples: Union[int, None],
+                       per_document: bool=False
                        ):
     """Perform an evaluation using cape's answer decoder
 
@@ -283,10 +291,11 @@ def perform_evaluation(model_name: str,
     :param aggregated_output_path: path to write aggregated output to
     :param elmo_char_cnn: if true, uses the elmo CNN to make token embeddings, less OOV but
         requires much more memory
+    :param per_document: if false, return best scoring answer to a question, if true,
+        the best scoring answer from each document is used instead.
     """
     async = True
     corpus_name = 'all'
-    per_document = False
 
     print('Setting Up:')
     model_dir = ModelDir(model_name)
@@ -319,7 +328,7 @@ def perform_evaluation(model_name: str,
         raise RuntimeError()
 
     df = pd.DataFrame(evaluation.per_sample)
-    compute_and_dump_official_output(df, official_output_path)
+    compute_and_dump_official_output(df, official_output_path, per_document=per_document)
 
     print("Saving paragraph result")
     df.to_csv(paragraph_output_path, index=False)
@@ -358,8 +367,11 @@ def main():
                         help='Use Elmo char CNN - if false, uses precomputed token representations')
     parser.add_argument('-no_c', '--no_elmo_character_cnn', action='store_false', dest='elmo_character_cnn')
     parser.add_argument('-s', '--samples', type=int, default=None, help='Number of samples to run, defaults to all')
-
-    parser.set_defaults(elmo_character_cnn=True)
+    parser.add_argument('-D', '--per_document', action='store_true', dest='per_document',
+                        help='return scores per question, document pair')
+    parser.add_argument('-no_D', '--no_per_document', action='store_false', dest='per_document',
+                        help='return best score for each document')
+    parser.set_defaults(elmo_character_cnn=True, per_document=False)
     args = parser.parse_args()
 
     perform_evaluation(
@@ -377,7 +389,8 @@ def main():
         paragraph_output_path=args.paragraph_output,
         aggregated_output_path=args.aggregated_output,
         elmo_char_cnn=args.elmo_character_cnn,
-        n_samples=args.samples
+        n_samples=args.samples,
+        per_document=args.per_document
     )
 
 
